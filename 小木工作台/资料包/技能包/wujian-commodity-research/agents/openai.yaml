@@ -1,0 +1,4 @@
+interface:
+  display_name: "国内期货深度研究"
+  short_description: "按品种加载专属框架，完成全景研究与新信息短期、周期和长期影响评估"
+  default_prompt: "使用 $wujian-commodity-research 研究黄金，读取最新可得证据并注明缺口。"

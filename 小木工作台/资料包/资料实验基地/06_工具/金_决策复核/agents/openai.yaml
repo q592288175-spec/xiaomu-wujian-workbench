@@ -1,0 +1,4 @@
+interface:
+  display_name: "五简期货决策助手"
+  short_description: "五层择境与三档风控，按结构制定入场止损、仓位、止盈及加仓计划"
+  default_prompt: "请使用 $wujian-futures-decision，承接我的筛选与研究结果，核对账户风险后生成极简期货决策卡。"

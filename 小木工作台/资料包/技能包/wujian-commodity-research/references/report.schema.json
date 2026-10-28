@@ -1,0 +1,469 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex domestic futures research v3",
+  "description": "结构契约不证明事实真实性。运行时还需时间、引用、口径和推理校验。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "report_id",
+    "mode",
+    "instrument",
+    "as_of",
+    "framework_version",
+    "status",
+    "sources",
+    "facts",
+    "hypotheses",
+    "brief",
+    "watch_rules",
+    "changes",
+    "trade_permission",
+    "coverage",
+    "scenarios"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "3.0"
+    },
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "enum": [
+        "full_research",
+        "event_impact"
+      ]
+    },
+    "instrument": {
+      "type": "string",
+      "pattern": "^(SHFE|INE|DCE|CZCE|GFEX|CFFEX)\\.[A-Z]+$"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "framework_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "conditional",
+        "insufficient_evidence",
+        "reviewed",
+        "simulation"
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "publisher",
+          "url",
+          "origin_group",
+          "access_status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "origin_group": {
+            "type": "string"
+          },
+          "access_status": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "metric_id",
+          "statement",
+          "value",
+          "unit",
+          "observation_start",
+          "observation_end",
+          "published_at",
+          "retrieved_at",
+          "status",
+          "source_ids",
+          "locator",
+          "definition",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "metric_id": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "value": {},
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observation_start": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observation_end": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "published_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retrieved_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "verified",
+              "estimated",
+              "calculated",
+              "quoted",
+              "disputed",
+              "unavailable",
+              "simulation"
+            ]
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "locator": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "definition": {
+            "type": "string"
+          },
+          "revision": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "claim",
+          "mechanism",
+          "horizon",
+          "supporting_facts",
+          "contradicting_facts",
+          "confidence",
+          "falsifier"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "mechanism": {
+            "type": "string"
+          },
+          "horizon": {
+            "type": "string"
+          },
+          "supporting_facts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contradicting_facts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "falsifier": {
+            "type": "object",
+            "required": [
+              "metric",
+              "condition",
+              "window",
+              "basis",
+              "action"
+            ],
+            "properties": {
+              "metric": {
+                "type": "string"
+              },
+              "condition": {
+                "type": "string"
+              },
+              "window": {
+                "type": "string"
+              },
+              "basis": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "brief": {
+      "type": "object",
+      "required": [
+        "where",
+        "pressures",
+        "supports",
+        "watch",
+        "main_conflict",
+        "largest_unknown"
+      ]
+    },
+    "watch_rules": {
+      "type": "array",
+      "minItems": 1
+    },
+    "changes": {
+      "type": "object",
+      "required": [
+        "previous_report_id",
+        "action",
+        "before",
+        "after",
+        "reason"
+      ]
+    },
+    "trade_permission": {
+      "const": false
+    },
+    "event": {
+      "type": "object",
+      "required": [
+        "raw_input",
+        "first_published_at",
+        "novelty",
+        "baseline_report_id",
+        "baseline_adequacy",
+        "impact_class",
+        "channels",
+        "priced_in",
+        "price_effect",
+        "response"
+      ],
+      "properties": {
+        "raw_input": {
+          "type": "string"
+        },
+        "first_published_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "novelty": {
+          "enum": [
+            "new",
+            "realization",
+            "revision",
+            "duplicate",
+            "opinion",
+            "unknown"
+          ]
+        },
+        "baseline_report_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "baseline_adequacy": {
+          "enum": [
+            "adequate",
+            "partial",
+            "missing"
+          ]
+        },
+        "impact_class": {
+          "enum": [
+            "short_term",
+            "seasonal_cyclical",
+            "structural",
+            "mixed",
+            "insufficient_evidence"
+          ]
+        },
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "variable",
+              "mechanism",
+              "scale",
+              "onset_lag",
+              "duration",
+              "reversibility",
+              "buffers",
+              "evidence_ids",
+              "falsifier"
+            ],
+            "properties": {
+              "variable": {
+                "type": "string"
+              },
+              "mechanism": {
+                "type": "string"
+              },
+              "scale": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "onset_lag": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "string"
+              },
+              "reversibility": {
+                "type": "string"
+              },
+              "buffers": {
+                "type": "string"
+              },
+              "evidence_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "falsifier": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "priced_in": {
+          "type": "string"
+        },
+        "price_effect": {
+          "type": "object",
+          "required": [
+            "immediate",
+            "persistent",
+            "spot_near_far",
+            "confidence",
+            "conditions"
+          ]
+        },
+        "response": {
+          "type": "object",
+          "required": [
+            "research_action",
+            "flat_account",
+            "existing_position",
+            "next_check",
+            "invalidation_action"
+          ]
+        }
+      }
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "metric_id",
+          "status",
+          "evidence_ids",
+          "gap"
+        ]
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "conditions",
+          "price_effect",
+          "invalidation"
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "event_impact"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "event"
+        ]
+      }
+    }
+  ],
+  "additionalProperties": true
+}

@@ -1,0 +1,19 @@
+# Private machine configuration and generated data
+.env
+.env.*
+!.env.example
+.runtime/
+node_modules/
+.venv*/
+__pycache__/
+.pytest_cache/
+.playwright-cli/
+output/
+操作记录/
+*.sqlite
+*.sqlite-*
+*.db
+*.log
+*.pem
+*.key
+.DS_Store

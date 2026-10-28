@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="holo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#06100f">
+  <meta name="description" content="小木五简交易系统全息版：以月周大方向为入口，贯通火水金土木">
+  <link rel="stylesheet" href="/monitor.css">
+  <title>小木 · 五简交易系统 · 全息版</title>
+  <link rel="icon" href="/assets/wujian/brand/xiaomu-five-elements.png">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/cockpit.css">
+  <link rel="stylesheet" href="/rule-details.css">
+  <link rel="stylesheet" href="/ui/conversation-window.css">
+  <link rel="stylesheet" href="/account-ui.css">
+  <link rel="stylesheet" href="/cockpit-theme.css">
+  <link rel="stylesheet" href="/cockpit-grid.css?v=20261021-compact">
+<link rel="stylesheet" href="/theme/tokens.css"><link rel="stylesheet" href="/shell.css"></head>
+<body class="cockpit">
+  <div id="cockpit-shell">
+    <header class="cockpit-header">
+      <a class="brand" href="/market-panorama.html" aria-label="返回市场全景">
+        <img class="brand-emblem" src="/assets/wujian/brand/wujian-complete-logo.png" alt="五简交易系统">
+        <span><b>小木</b></span>
+      </a>
+      <div class="header-context">
+        <label>账户<select id="accountSelect" aria-label="选择账户"></select></label><div class="header-account-controls"><button class="header-account-link" data-account-action="add">添加账户</button><button class="header-account-link" data-account-action="sync">修改余额</button><button class="header-account-link" data-account-action="remove">删除/停用</button></div>
+        <span><small>行情截止</small><b id="marketDate">读取中</b></span>
+        <span class="rule-meta"><small>规则版本</small><button id="ruleVersion" class="rule-version-button" type="button" aria-haspopup="dialog" aria-controls="ruleDialog" title="查看当前筛选规则">读取中</button></span>
+        <span class="system-health"><i id="healthDot"></i><b id="healthText">连接本机业务库</b></span>
+      </div>
+      <button id="assistantButton" class="assistant-button" type="button">小木对话</button>
+      <a class="assistant-button" href="/market-panorama.html?from=cockpit" style="text-decoration:none;white-space:nowrap">市场全景</a>
+      <nav class="version-switch" aria-label="界面版本">
+        <a href="/market-panorama.html">市场全景</a>
+      </nav>
+    </header>
+    <div class="account-funds-bar"><div id="accountSummary" class="account-summary" aria-live="polite"></div></div>
+
+    <main class="cockpit-main">
+      <section class="panel opportunity-panel" aria-labelledby="opportunityTitle">
+        <div class="panel-head">
+          <div><span class="eyebrow">FIRE · 识别机会</span><h1 id="opportunityTitle">月周日共振池</h1></div>
+          <a class="icon-link" href="/?view=fire" title="打开火识别机会" aria-label="打开火识别机会">↗</a>
+        </div>
+        <div id="poolSwitch" class="pool-switch" role="tablist" aria-label="观察池周期">
+          <button class="active" data-pool="month-week-day" role="tab" aria-selected="true"><b>月周日共振</b><small>盘后观察池</small></button>
+          <button data-pool="day-trend" role="tab" aria-selected="false"><b>日K顺势</b><small>日线观察池</small></button>
+        </div>
+        <div class="opportunity-summary" id="opportunitySummary"></div>
+        <div class="direction-switch" role="tablist" aria-label="方向筛选">
+          <button class="active" data-side="all">全部</button>
+          <button data-side="long">多头</button>
+          <button data-side="short">空头</button>
+        </div>
+        <div id="opportunityList" class="opportunity-list" aria-live="polite"></div>
+      </section>
+
+      <section class="market-map" aria-labelledby="marketMapTitle">
+        <div class="map-heading">
+          <span class="eyebrow">MARKET MAP</span>
+          <h1 id="marketMapTitle">国内期货周期全景</h1>
+          <p>月周日共振 · 日K顺势 · 盘后观察</p>
+        </div>
+        <div class="globe-stage">
+          <div id="globeScene" aria-label="可拖动旋转的三维全息地球"></div>
+          <div class="globe-center-label" aria-hidden="true"><b id="selectedSectorName">全部板块</b><small id="selectedSectorCount">正在读取机会</small></div>
+          <span class="globe-affection" aria-label="文彬爱你">
+            <span class="affection-words" aria-hidden="true">文彬爱你</span>
+            <span class="affection-heart" aria-hidden="true">
+              <span class="affection-heart-halo"></span>
+              <svg class="affection-heart-gem" viewBox="0 0 24 24">
+                <defs><linearGradient id="affection-rainbow" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                  <stop class="affection-rainbow-stop" offset="0" stop-color="#ff76bc" style="--phase:0s"/>
+                  <stop class="affection-rainbow-stop" offset=".17" stop-color="#ff9c62" style="--phase:-.86s"/>
+                  <stop class="affection-rainbow-stop" offset=".33" stop-color="#ffe47a" style="--phase:-1.72s"/>
+                  <stop class="affection-rainbow-stop" offset=".5" stop-color="#70efac" style="--phase:-2.58s"/>
+                  <stop class="affection-rainbow-stop" offset=".67" stop-color="#66e6ff" style="--phase:-3.44s"/>
+                  <stop class="affection-rainbow-stop" offset=".83" stop-color="#8a9bff" style="--phase:-4.3s"/>
+                  <stop class="affection-rainbow-stop" offset="1" stop-color="#d58bff" style="--phase:-5.16s"/>
+                </linearGradient></defs>
+                <path d="M12 21S2.5 15.3 2.5 8.9A5.4 5.4 0 0 1 12 5.4a5.4 5.4 0 0 1 9.5 3.5C21.5 15.3 12 21 12 21Z" fill="url(#affection-rainbow)" stroke="#ffffffb3" stroke-width=".45"/>
+                <path d="M5 8.7c0-2.1 2.4-3.3 4-1.7" fill="none" stroke="#ffffffb8" stroke-width=".85" stroke-linecap="round"/>
+              </svg>
+              <span class="affection-spark affection-spark-one">✦</span><span class="affection-spark affection-spark-two">✧</span><span class="affection-spark affection-spark-three">✦</span>
+            </span>
+          </span>
+          <span id="sceneHint">拖动地球可旋转</span>
+        </div>
+        <div id="sectorNav" class="sector-nav" aria-label="期货板块"></div>
+        <div class="market-legend"><span class="long-dot">多头观察</span><span class="short-dot">空头观察</span><span>共振 / 日K候选数量</span></div>
+      </section>
+
+      <section class="panel detail-panel" aria-labelledby="detailTitle">
+        <div class="panel-head">
+          <div><span class="eyebrow">FOCUS · 当前品种</span><h1 id="detailTitle">等待选择</h1></div>
+          <span id="detailDirection" class="direction-badge neutral">未选择</span>
+        </div>
+        <div id="detailBody" class="detail-body"></div>
+        <div id="detailActions" class="detail-actions"></div>
+      </section>
+    </main>
+
+    <section class="control-strip" aria-label="账户风险与五行进度">
+      <div class="account-snapshot">
+        <span><small>账户档位</small><b id="accountTier">未知</b></span>
+        <span><small>实际权益</small><b id="accountEquity">未知</b></span>
+        <span><small>计划风险</small><b id="plannedRisk">0</b></span>
+        <span><small>停机状态</small><b id="stopState">读取中</b></span>
+      </div>
+      <nav id="workflowNav" class="workflow-nav" aria-label="五行交易流程"></nav>
+    </section>
+  </div>
+  <aside id="callPanel" class="call-panel" hidden aria-label="小木助手">
+    <div class="call-head"><span id="voiceCoreCall"></span><div><b>小木</b><small id="callStatus" role="status">对话就绪</small></div><span id="callTime">00:00</span><div class="conversation-tools"><button id="minCall" title="缩小窗口，保持通话" aria-label="缩小窗口">−</button><button id="maxCall" title="放大窗口" aria-label="放大窗口" aria-pressed="false"><img src="/assets/wujian/icons/expand.svg" alt=""></button><button id="closeCall" title="关闭窗口并挂断" aria-label="关闭窗口并挂断">×</button></div></div>
+    <div id="voiceCoreMain" hidden></div>
+    <div id="messages" class="messages" role="log" aria-live="polite"></div>
+    <div id="callDraft" aria-live="off" hidden></div>
+    <form id="chatForm"><input id="chatInput" aria-label="对小木说" placeholder="输入问题或指令" autocomplete="off"><button aria-label="发送">↑</button></form>
+    <div class="call-controls"><button id="connectCall">接通</button><button id="hangup" disabled>挂断</button><button id="stopCall" title="停止当前播报，保留通话" disabled>停止</button></div>
+  </aside>
+  <button id="floatingCall" hidden>小木对话</button>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <dialog id="ruleDialog"><header><h2 id="ruleDialogTitle">当前筛选规则</h2><button id="ruleDialogClose" class="rule-dialog-close" type="button" aria-label="关闭规则详情">关闭</button></header><div id="ruleDialogBody"></div></dialog>
+  <script type="module" src="/hologram.js"></script>
+  <script type="module" src="/cockpit-workbench.js"></script>
+</body>
+</html>

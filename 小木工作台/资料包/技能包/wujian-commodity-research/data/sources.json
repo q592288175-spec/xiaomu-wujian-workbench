@@ -1,0 +1,254 @@
+{
+  "SHFE": {
+    "id": "SHFE",
+    "publisher": "上海期货交易所",
+    "entry_url": "https://www.shfe.com.cn/",
+    "provides": "行情、仓单、库存周报、品种规则",
+    "cadence": "日/周/公告",
+    "access_status": "本轮网页可读",
+    "actual_series_connected": false
+  },
+  "INE": {
+    "id": "INE",
+    "publisher": "上海国际能源交易中心",
+    "entry_url": "https://www.ine.cn/",
+    "provides": "保税品种、SCFIS欧线合约、交割规则",
+    "cadence": "日/周/公告",
+    "access_status": "本轮访问受防火墙限制；部分品种可从SHFE进入",
+    "actual_series_connected": false
+  },
+  "DCE": {
+    "id": "DCE",
+    "publisher": "大连商品交易所",
+    "entry_url": "https://www.dce.com.cn/",
+    "provides": "行情、仓单、品种合约与交割规则",
+    "cadence": "日/公告",
+    "access_status": "本轮网页抓取失败",
+    "actual_series_connected": false
+  },
+  "CZCE": {
+    "id": "CZCE",
+    "publisher": "郑州商品交易所",
+    "entry_url": "https://www.czce.com.cn/",
+    "provides": "行情、仓单、品种合约与交割规则",
+    "cadence": "日/公告",
+    "access_status": "本轮网页抓取失败",
+    "actual_series_connected": false
+  },
+  "GFEX": {
+    "id": "GFEX",
+    "publisher": "广州期货交易所",
+    "entry_url": "https://www.gfex.com.cn/",
+    "provides": "新能源金属及铂钯合约规则",
+    "cadence": "日/公告",
+    "access_status": "本轮首页抓取失败",
+    "actual_series_connected": false
+  },
+  "CFFEX": {
+    "id": "CFFEX",
+    "publisher": "中国金融期货交易所",
+    "entry_url": "https://www.cffex.com.cn/cp/",
+    "provides": "股指及国债合约、可交割券与转换因子",
+    "cadence": "日/公告",
+    "access_status": "本轮搜索定位产品页；打开超时",
+    "actual_series_connected": false
+  },
+  "NBS": {
+    "id": "NBS",
+    "publisher": "国家统计局",
+    "entry_url": "https://data.stats.gov.cn/",
+    "provides": "宏观、工业产量、农作物、投资与消费",
+    "cadence": "月/季/年",
+    "access_status": "本轮搜索定位；逐表待取",
+    "actual_series_connected": false
+  },
+  "CUSTOMS": {
+    "id": "CUSTOMS",
+    "publisher": "海关总署",
+    "entry_url": "https://online.customs.gov.cn/",
+    "provides": "分商品及国别进口出口数量金额",
+    "cadence": "月",
+    "access_status": "本轮搜索定位；查询权限待测",
+    "actual_series_connected": false
+  },
+  "MOA": {
+    "id": "MOA",
+    "publisher": "农业农村部",
+    "entry_url": "https://www.moa.gov.cn/",
+    "provides": "CASDE、畜牧监测、农产品价格、产能政策",
+    "cadence": "周/月/公告",
+    "access_status": "本轮搜索到CASDE及畜牧原始发布",
+    "actual_series_connected": false
+  },
+  "CMA": {
+    "id": "CMA",
+    "publisher": "中国气象局",
+    "entry_url": "https://www.cma.gov.cn/",
+    "provides": "实况降水、温度、墒情、农业气象灾害",
+    "cadence": "日/旬/月/事件",
+    "access_status": "本轮搜索到农业气象资料；当期站点待取",
+    "actual_series_connected": false
+  },
+  "USDA": {
+    "id": "USDA",
+    "publisher": "美国农业部",
+    "entry_url": "https://www.usda.gov/oce/commodity/wasde/",
+    "provides": "WASDE作物年度平衡表；NASS生长进度、面积、单产",
+    "cadence": "周/月/季",
+    "access_status": "本轮搜索定位WASDE和NASS进度",
+    "actual_series_connected": false
+  },
+  "EIA": {
+    "id": "EIA",
+    "publisher": "美国能源信息署",
+    "entry_url": "https://www.eia.gov/petroleum/supply/weekly/",
+    "provides": "原油成品油库存、产量、进出口、加工与需求代理",
+    "cadence": "周/月",
+    "access_status": "本轮搜索定位原始表；未取当期数值",
+    "actual_series_connected": false
+  },
+  "PBOC": {
+    "id": "PBOC",
+    "publisher": "中国人民银行",
+    "entry_url": "https://www.pbc.gov.cn/",
+    "provides": "政策利率、公开市场操作、社融信贷货币、政策报告",
+    "cadence": "日/月/季/事件",
+    "access_status": "本轮搜索定位政策报告；当期数据待取",
+    "actual_series_connected": false
+  },
+  "MOF": {
+    "id": "MOF",
+    "publisher": "财政部",
+    "entry_url": "https://www.mof.gov.cn/",
+    "provides": "国债发行拍卖、财政收支与计划",
+    "cadence": "公告/月",
+    "access_status": "官方候选入口，未本轮打开",
+    "actual_series_connected": false
+  },
+  "CHINABOND": {
+    "id": "CHINABOND",
+    "publisher": "中国债券信息网",
+    "entry_url": "https://www.chinabond.com.cn/",
+    "provides": "收益率曲线、债券估值与托管",
+    "cadence": "日/月",
+    "access_status": "官方候选入口，接口及授权待测",
+    "actual_series_connected": false
+  },
+  "CHINAMONEY": {
+    "id": "CHINAMONEY",
+    "publisher": "中国货币网",
+    "entry_url": "https://www.chinamoney.com.cn/",
+    "provides": "银行间资金、回购、Shibor及人民币汇率",
+    "cadence": "日",
+    "access_status": "官方候选入口，接口及授权待测",
+    "actual_series_connected": false
+  },
+  "INDEX": {
+    "id": "INDEX",
+    "publisher": "中证指数",
+    "entry_url": "https://www.csindex.com.cn/",
+    "provides": "指数编制、成分权重、估值与行业结构",
+    "cadence": "日/定期调整",
+    "access_status": "官方候选入口，当期数据待取",
+    "actual_series_connected": false
+  },
+  "DISCLOSURE": {
+    "id": "DISCLOSURE",
+    "publisher": "交易所公告及巨潮",
+    "entry_url": "https://www.cninfo.com.cn/",
+    "provides": "成分股财报、生产经营、停产扩产、资本开支",
+    "cadence": "公告/季",
+    "access_status": "官方披露渠道候选，原始文件逐份核验",
+    "actual_series_connected": false
+  },
+  "FED": {
+    "id": "FED",
+    "publisher": "美联储",
+    "entry_url": "https://www.federalreserve.gov/monetarypolicy.htm",
+    "provides": "政策决定、声明、预测及沟通",
+    "cadence": "会议/事件",
+    "access_status": "附件提供，运行时重查；不沿用附件利率值",
+    "actual_series_connected": false
+  },
+  "TREASURY": {
+    "id": "TREASURY",
+    "publisher": "美国财政部",
+    "entry_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates",
+    "provides": "名义及实际收益率曲线",
+    "cadence": "日",
+    "access_status": "附件提供，运行时核验期限列",
+    "actual_series_connected": false
+  },
+  "WGC": {
+    "id": "WGC",
+    "publisher": "世界黄金协会",
+    "entry_url": "https://www.gold.org/goldhub",
+    "provides": "黄金需求、央行购金估计、ETF数量",
+    "cadence": "月/季",
+    "access_status": "附件提供；估计可修订，全球与单基金分开",
+    "actual_series_connected": false
+  },
+  "SAFE": {
+    "id": "SAFE",
+    "publisher": "国家外汇管理局",
+    "entry_url": "https://www.safe.gov.cn/",
+    "provides": "官方储备资产数量及金额",
+    "cadence": "月",
+    "access_status": "附件提供；不能由金额推断购金数量",
+    "actual_series_connected": false
+  },
+  "CFTC": {
+    "id": "CFTC",
+    "publisher": "美国商品期货交易委员会",
+    "entry_url": "https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm",
+    "provides": "分类持仓及统计说明",
+    "cadence": "周",
+    "access_status": "附件提供；持仓日与公布日分开",
+    "actual_series_connected": false
+  },
+  "MPOB": {
+    "id": "MPOB",
+    "publisher": "马来西亚棕榈油局",
+    "entry_url": "https://bepi.mpob.gov.my/",
+    "provides": "棕榈油产量库存出口等",
+    "cadence": "月",
+    "access_status": "行业官方候选，运行时核验",
+    "actual_series_connected": false
+  },
+  "SSE_SHIP": {
+    "id": "SSE_SHIP",
+    "publisher": "上海航运交易所",
+    "entry_url": "https://www.sse.net.cn/",
+    "provides": "SCFIS欧线、SCFI及指数编制",
+    "cadence": "按各指数发布日历",
+    "access_status": "行业官方候选；SCFI不替代SCFIS",
+    "actual_series_connected": false
+  },
+  "OPEC": {
+    "id": "OPEC",
+    "publisher": "OPEC",
+    "entry_url": "https://www.opec.org/",
+    "provides": "月报、产量目标与供应政策",
+    "cadence": "月/公告",
+    "access_status": "机构候选，目标不等于实际产量",
+    "actual_series_connected": false
+  },
+  "INDUSTRY": {
+    "id": "INDUSTRY",
+    "publisher": "授权产业数据与企业调研",
+    "entry_url": null,
+    "provides": "SMM、Mysteel、钢联、隆众、卓创及对应行业协会的现货/开工/利润/库存/订单",
+    "cadence": "按具体序列",
+    "access_status": "未开通或验证任何新增付费权限；只使用已有合法授权",
+    "actual_series_connected": false
+  },
+  "OVERSEAS": {
+    "id": "OVERSEAS",
+    "publisher": "产地官方及海外行业机构",
+    "entry_url": null,
+    "provides": "对应产地统计、气象、矿企、炼厂、协会、境外交易所数据",
+    "cadence": "按来源",
+    "access_status": "运行时查明确发布者与精确原文，不虚构API",
+    "actual_series_connected": false
+  }
+}
