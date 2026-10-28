@@ -11,7 +11,7 @@ export function validateTqCredentials(input){
 // One connection shared by market pages and existing reminders. No broker login.
 export class TqLogin{
  constructor({monitor,root=resolve('.'),home=process.env.WUJIAN_MONITOR_HOME||resolve(root,'.runtime/monitor'),protect=protectLocalSecret}={}){
-  Object.assign(this,{monitor,protect});this.file=resolve(home,'tq-login.enc');this.settingsFile=resolve(home,'tq-login-settings.json');this.saved=false;this.managed=false;this.configError=null;this.busy=false;
+  Object.assign(this,{monitor,protect});this.file=resolve(home,'tq-login.enc');this.legacyFile=resolve(home,'credentials.enc');this.settingsFile=resolve(home,'tq-login-settings.json');this.saved=false;this.managed=false;this.configError=null;this.busy=false;
  }
  async init(){
   try{this.managed=JSON.parse(await readFile(this.settingsFile,'utf8')).managed===true}catch{}
@@ -37,7 +37,7 @@ export class TqLogin{
    // Encrypt before changing the active connection. A failure preserves the old login.
    const envelope=remember?await this.protect(JSON.stringify(credentials)):null;
    await mkdir(dirname(this.file),{recursive:true});
-   if(envelope)await atomicWrite(this.file,JSON.stringify(envelope));else await rm(this.file,{force:true});
+   if(envelope)await atomicWrite(this.file,JSON.stringify(envelope));else{await rm(this.file,{force:true});await rm(this.legacyFile,{force:true});}
    await atomicWrite(this.settingsFile,JSON.stringify({managed:true}));
    this.saved=remember;this.managed=true;this.configError=null;
    await this.prepare();this.monitor.connect(credentials,{resume:false});return this.status();
@@ -46,7 +46,7 @@ export class TqLogin{
  async reconnect(){if(this.busy)throw Error('正在处理行情登录，请稍候');if(!this.monitor.credentials)throw Error('请先填写快期 / 天勤账号和密码');this.busy=true;try{await this.prepare();this.monitor.connect(this.monitor.credentials,{resume:false});return this.status()}finally{this.busy=false}}
  async logout(){
   if(this.busy)throw Error('正在处理行情登录，请稍候');
-  await mkdir(dirname(this.file),{recursive:true});await rm(this.file,{force:true});await atomicWrite(this.settingsFile,JSON.stringify({managed:true}));
+  await mkdir(dirname(this.file),{recursive:true});await rm(this.file,{force:true});await rm(this.legacyFile,{force:true});await atomicWrite(this.settingsFile,JSON.stringify({managed:true}));
   this.saved=false;this.managed=true;this.configError=null;this.monitor.watchMarket=false;this.monitor.marketSymbols=[];this.monitor.credentials=null;
   // Existing reminders keep their enable/disable states and use their public feed.
   const wasRuntime=this.monitor.runtime;await this.monitor.useProvider('sina');if(wasRuntime===false)this.monitor.setRuntime(false,'天勤退出，保留原监控停用状态');return this.status();

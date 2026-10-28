@@ -21,7 +21,7 @@ test('登录校验、会话登录、密文恢复与退出，不回传密码',asy
  const envelope=await readFile(login.file,'utf8');assert.ok(!envelope.includes(credentials.password));
  const nextMonitor=fakeMonitor();nextMonitor.provider='tqsdk';const restored=new TqLogin({monitor:nextMonitor,home,protect});await restored.init();assert.equal(restored.status().configured,true);assert.equal(nextMonitor.credentials.password,credentials.password);
  await restored.login({...credentials,remember:false});assert.equal(restored.status().saved,false);await assert.rejects(()=>readFile(login.file),{code:'ENOENT'});
- await restored.logout();assert.equal(restored.status().configured,false);assert.equal(nextMonitor.provider,'sina');assert.equal(nextMonitor.watchMarket,false);
+ await writeFile(restored.legacyFile,'fixture-legacy-ciphertext');await restored.logout();assert.equal(restored.status().configured,false);assert.equal(nextMonitor.provider,'sina');assert.equal(nextMonitor.watchMarket,false);await assert.rejects(()=>readFile(restored.legacyFile),{code:'ENOENT'});
  assert.equal(JSON.parse(await readFile(login.settingsFile)).managed,true);
 });
 
@@ -51,7 +51,7 @@ test('真实 Python 采集器协议：无提醒也订阅、接收量价仓；认
  const root=await mkdtemp(join(output,'collector-'));await mkdir(join(root,'integrations'));await mkdir(join(root,'.runtime/monitor-deps/tqsdk'),{recursive:true});
  await copyFile('integrations/monitor_market.py',join(root,'integrations/monitor_market.py'));await copyFile('tests/helpers/tq-sdk-fixture.py',join(root,'.runtime/monitor-deps/tqsdk/__init__.py'));
  const previous=process.env.TQ_PYTHON;process.env.TQ_PYTHON=resolve('.runtime/python313/python.exe');
- const monitor=new MonitorService({root,path:':memory:',getCatalog:async()=>[{symbol:'SHFE.FU2701',name:'燃料油',code:'FU',exchange:'SHFE'}]}),login=new TqLogin({monitor,home:join(root,'secrets'),protect});
+ const monitor=new MonitorService({root,path:':memory:',getCatalog:async()=>[]}),login=new TqLogin({monitor,home:join(root,'secrets'),protect});
  const wait=async predicate=>{for(let i=0;i<150;i++){if(predicate())return;await new Promise(r=>setTimeout(r,100))}throw Error(JSON.stringify(login.status()))};
  try{
   monitor.setRuntime(false,'fixture paused');await login.login({...credentials,remember:false});await wait(()=>login.status().quoteCount===1);const state=login.status();assert.equal(state.status,'connected');assert.equal(state.heartbeatFresh,true);assert.equal(monitor.store.rules().length,0);assert.equal(monitor.runtime,false);
