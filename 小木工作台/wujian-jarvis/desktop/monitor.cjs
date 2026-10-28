@@ -14,7 +14,7 @@ function installMonitor({base,project,getWindow,isQuitting,requestQuit}){
   const response=await fetch(base+'/api/monitor/'+route,input===undefined?{signal:AbortSignal.timeout(6000)}:{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(input),signal:AbortSignal.timeout(6000)});
   const value=await response.json();if(!response.ok)throw Error(value.error||'提醒服务未响应');return value;
  };
- const tqApi=async(route,input)=>{const response=await fetch(base+'/api/tq/'+route,{signal:AbortSignal.timeout(20000),...(input===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(input)})});const value=await response.json();if(!response.ok)throw Error(value.error||'天勤行情服务未响应');return value;};
+ const tqApi=async(route,input)=>{const response=await fetch(base+'/api/tq/'+route,{signal:AbortSignal.timeout(input===undefined?10000:60000),...(input===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(input)})});const value=await response.json();if(!response.ok)throw Error(value.error||'天勤行情服务未响应');return value;};
  const reveal=eventId=>{const window=getWindow();if(!window||window.isDestroyed())return;if(window.isMinimized())window.restore();window.show();window.focus();if(eventId)void window.loadURL(base+'/?view=monitor&monitorEvent='+encodeURIComponent(eventId));};
  const trusted=event=>{const window=getWindow();return window&&!window.isDestroyed()&&event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame&&new URL(event.senderFrame.url).origin===base;};
  ipcMain.handle('xiaomu:monitor-configure',async(event,input)=>{

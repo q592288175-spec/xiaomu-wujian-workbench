@@ -25,15 +25,17 @@ class TqApi:
             raise Exception('auth failed: ' + auth.password)
 
     def query_quotes(self, **kwargs):
-        return ['SHFE.fu2701']
+        return ['SHFE.fu2701', 'SHFE.au2701']
 
     def query_cont_quotes(self):
-        return ['SHFE.fu2701']
+        return ['SHFE.fu2701', 'SHFE.au2701']
 
     def get_trading_calendar(self, *args):
         return Calendar()
 
     def get_quote(self, symbol):
+        if 'au' in symbol:
+            raise Exception('您的账户不支持查看 ' + symbol + ' 的行情数据，需要购买后才能使用')
         return SimpleNamespace(underlying_symbol='SHFE.fu2701', instrument_name='燃料油2701',
                                expire_datetime=1900000000, price_tick=1, expired=False,
                                datetime=datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S.%f'),
@@ -44,7 +46,8 @@ class TqApi:
         time.sleep(.05)
 
     def is_changing(self, q):
-        return True
+        # Closed-session snapshot: no incremental updates after subscription.
+        return False
 
     def close(self):
         pass

@@ -56,6 +56,16 @@ test('真实 Python 采集器协议：无提醒也订阅、接收量价仓；认
  try{
   monitor.setRuntime(false,'fixture paused');await login.login({...credentials,remember:false});await wait(()=>login.status().quoteCount===1);const state=login.status();assert.equal(state.status,'connected');assert.equal(state.heartbeatFresh,true);assert.equal(monitor.store.rules().length,0);assert.equal(monitor.runtime,false);
   const quote=login.quotes().items[0];assert.equal(quote.last,3000);assert.equal(quote.previousSettlement,2900);assert.equal(quote.volume,12345);assert.equal(quote.interest,67890);assert.ok(quote.changePct>3);
+  assert.equal(quote.sessionActive,false);assert.deepEqual(state.unavailable,[{symbol:'SHFE.AU2701',reason:'行情权限不足'}]);
+  await new Promise(r=>setTimeout(r,300));assert.equal(login.quotes().items[0].sequence,quote.sequence,'休市快照不伪造持续跳价');
   await login.login({user:'invalid',password:credentials.password,remember:false});await wait(()=>login.status().status==='permission-denied');assert.equal(login.status().quoteCount,0);assert.ok(!JSON.stringify(login.status()).includes(credentials.password));
  }finally{monitor.stop();monitor.store.close();if(previous===undefined)delete process.env.TQ_PYTHON;else process.env.TQ_PYTHON=previous;}
+});
+
+test('重启后恢复保存账号并自动订阅；不会启用原来暂停的监控',async()=>{
+ const home=await mkdtemp(join(output,'restart-')),first=fakeMonitor();
+ const login=new TqLogin({monitor:first,home,protect});await login.login({...credentials,remember:true});
+ const next=fakeMonitor();next.provider='tqsdk';next.runtime=false;
+ const restored=new TqLogin({monitor:next,home,protect});await restored.init();
+ assert.equal(restored.status().saved,true);assert.equal(next.watchMarket,true);assert.equal(next.subscription,'SHFE.FU2701');assert.equal(next.runtime,false);
 });

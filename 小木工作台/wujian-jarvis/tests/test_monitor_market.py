@@ -33,5 +33,26 @@ class SessionTests(unittest.TestCase):
         self.assertEqual(market.provider_symbol('CZCE.MA701'), 'CZCE.MA701')
         self.assertEqual(market.provider_symbol('CZCE.MA2701'), 'CZCE.MA701')
 
+    def test_permission_errors_and_network_errors_differ(self):
+        for message in ['用户权限认证失败', '您的账户不支持查看 SHFE.au2701 的行情数据，需要购买后才能使用', 'invalid credentials']:
+            self.assertTrue(market.permission_error(Exception(message)))
+        self.assertFalse(market.permission_error(Exception('connection timed out')))
+
+    def test_one_denied_contract_does_not_block_another(self):
+        from contextlib import redirect_stdout
+        from io import StringIO
+        class Api:
+            def get_quote(self, symbol):
+                if symbol == 'SHFE.au2701':
+                    raise Exception('您的账户不支持查看该合约，需要购买')
+                return {'last_price': 3000}
+        blocked, output = set(), StringIO()
+        with redirect_stdout(output):
+            self.assertIsNone(market.permitted_quote(Api(), 'SHFE.au2701', blocked))
+            self.assertIsNone(market.permitted_quote(Api(), 'SHFE.au2701', blocked))
+            self.assertEqual(market.permitted_quote(Api(), 'SHFE.fu2701', blocked)['last_price'], 3000)
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        self.assertIn('permission-denied', output.getvalue())
+
 if __name__ == '__main__':
     unittest.main()

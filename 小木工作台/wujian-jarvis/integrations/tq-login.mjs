@@ -27,7 +27,8 @@ export class TqLogin{
  status(){
   const m=this.monitor,selected=m.provider==='tqsdk',quotes=selected?[...m.quotes.values()].filter(q=>q.source==='TqSdk'):[];
   const heartbeatFresh=!!m.market.heartbeatAt&&m.now()-Date.parse(m.market.heartbeatAt)<=15000;
-  return {managed:this.managed,saved:this.saved,canRemember:process.platform==='win32',configured:!!m.credentials,selected,status:selected?m.market.status:'inactive',message:this.configError||(selected?m.market.message:'正在使用公开行情，天勤尚未启用'),heartbeatFresh,subscribed:selected?m.subscription.split(',').filter(Boolean).length:0,quoteCount:quotes.length,lastQuoteAt:quotes.map(q=>q.quoteAt).sort().at(-1)||null,samples:quotes.slice(0,6).map(({symbol,last,quoteAt,previousSettlement,volume,interest,source})=>({symbol,last,quoteAt,previousSettlement,volume,interest,source})),notice:'使用快期服务账号认证；可用交易所、实时权限与历史范围以你的账号为准。小木仅订阅行情。'};
+  const unavailable=selected?Object.entries(m.market.unavailableContracts||{}).map(([symbol,reason])=>({symbol,reason})):[];
+  return {unavailable,managed:this.managed,saved:this.saved,canRemember:process.platform==='win32',configured:!!m.credentials,selected,status:selected?m.market.status:'inactive',message:this.configError||(selected?m.market.message:'正在使用公开行情，天勤尚未启用'),heartbeatFresh,subscribed:selected?m.subscription.split(',').filter(Boolean).length:0,quoteCount:quotes.length,lastQuoteAt:quotes.map(q=>q.quoteAt).sort().at(-1)||null,samples:quotes.slice(0,6).map(({symbol,last,quoteAt,previousSettlement,volume,interest,source})=>({symbol,last,quoteAt,previousSettlement,volume,interest,source})),notice:'使用快期服务账号认证；可用交易所、实时权限与历史范围以你的账号为准。小木仅订阅行情。'};
  }
  async login(input){
   if(this.busy)throw Error('正在处理行情登录，请稍候');

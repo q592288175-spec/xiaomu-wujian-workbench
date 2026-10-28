@@ -1,7 +1,7 @@
 ﻿$ErrorActionPreference='Stop'
 $project=Split-Path $PSScriptRoot -Parent
-$output=Join-Path $project 'output/tq-login-20261028'
-$executable=Join-Path $project '.runtime/desktop-tq-login-20261028/小木-win32-x64/小木.exe'
+$output=Join-Path $project 'output/tq-release-20261028'
+$executable=Join-Path $project '.runtime/desktop-tq-verified-20261028/小木-win32-x64/小木.exe'
 if(-not(Test-Path -LiteralPath $executable)){throw '已验收的天勤登录桌面程序缺失'}
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $ws=New-Object -ComObject WScript.Shell

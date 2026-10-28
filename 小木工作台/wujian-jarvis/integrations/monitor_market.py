@@ -48,6 +48,25 @@ def provider_symbol(symbol):
     return exchange + '.' + (contract if exchange in ('CZCE', 'CFFEX') else contract.lower())
 
 
+def permission_error(error):
+    message = str(error).lower()
+    return any(word in message for word in ('认证失败', '权限', '到期', '用户名', '密码',
+               'auth', 'permission', 'expired', 'invalid credentials', '不支持查看', '需要购买'))
+
+
+def permitted_quote(api, symbol, blocked):
+    if symbol in blocked:
+        return None
+    try:
+        return api.get_quote(symbol)
+    except Exception as error:
+        if not permission_error(error):
+            raise
+        blocked.add(symbol)
+        emit('contract-status', symbol=symbol.upper(), status='unavailable', reason='permission-denied')
+        return None
+
+
 def seconds(value):
     hour, minute, second = map(int, value.split(':'))
     return hour * 3600 + minute * 60 + second
@@ -87,6 +106,7 @@ def run(config):
             emit('status', status='connecting', message='正在登录天勤并核验行情权限')
             api = TqApi(TqSim(), auth=auth, debug=False, disable_print=True)
             quote_objects, requested, expired, unavailable = {}, set(config.get('symbols', [])), set(), set()
+            delivered, blocked = set(), set()
             valid_symbols = set(api.query_quotes(ins_class='FUTURE', expired=False))
             today = datetime.now(SHANGHAI).date()
             calendar = api.get_trading_calendar(today-timedelta(days=10), today+timedelta(days=40))
@@ -94,8 +114,11 @@ def run(config):
             if not dates:
                 raise ValueError('calendar')
             main_symbols = [symbol for symbol in api.query_cont_quotes() if symbol.split('.')[0] in ('SHFE', 'INE', 'DCE', 'CZCE', 'GFEX', 'CFFEX')]
-            main_quotes = {symbol: api.get_quote(symbol) for symbol in main_symbols}
-            main_cont = {symbol: api.get_quote('KQ.m@' + symbol.rstrip('0123456789')) for symbol in main_symbols}
+            main_quotes = {symbol: q for symbol in main_symbols if (q := permitted_quote(api, symbol, blocked)) is not None}
+            main_cont = {symbol: permitted_quote(api, 'KQ.m@' + symbol.rstrip('0123456789'), blocked) for symbol in main_quotes}
+            if main_symbols and not main_quotes:
+                emit('status', status='permission-denied', message='账号已认证，但主力合约行情权限未通过，请在快期账户中心核对')
+                return
             catalog_signature, sequence, last_heartbeat, last_catalog = '', 0, 0, 0
             emit('status', status='connected', message='天勤行情连接已建立，等待合约报价', calendarDays=len(dates))
             while True:
@@ -112,7 +135,9 @@ def run(config):
                                 unavailable.add(symbol)
                                 emit('contract-status', symbol=symbol, status='unavailable')
                             continue
-                        quote_objects[symbol] = api.get_quote(provider_symbol(symbol))
+                        q = permitted_quote(api, provider_symbol(symbol), blocked)
+                        if q is not None:
+                            quote_objects[symbol] = q
                 api.wait_update(deadline=time.time()+1)
                 now = datetime.now(SHANGHAI)
                 if now.date() != today:
@@ -124,9 +149,10 @@ def run(config):
                     last_catalog = time.monotonic()
                     members = []
                     for original, initial in main_quotes.items():
-                        actual = main_cont[original].underlying_symbol or original
-                        q = api.get_quote(actual)
-                        if not q.instrument_name:
+                        continuous = main_cont[original]
+                        actual = (continuous.underlying_symbol if continuous else None) or original
+                        q = permitted_quote(api, actual, blocked)
+                        if q is None or not q.instrument_name:
                             continue
                         expiry = number(q.expire_datetime)
                         members.append(dict(symbol=actual.upper(), name=q.instrument_name, exchange=actual.split('.')[0], tickSize=number(q.price_tick), expiresAt=datetime.fromtimestamp(expiry, SHANGHAI).isoformat() if expiry and expiry > 0 else None))
@@ -145,7 +171,9 @@ def run(config):
                         continue
                     info = session_info(now, {'day': q.trading_time.day, 'night': q.trading_time.night}, dates)
                     active += int(info['sessionActive'])
-                    if not api.is_changing(q) or not q.datetime or q.expired:
+                    # get_quote may already hold a complete snapshot before wait_update.
+                    # Emit it once even during a closed session, retaining its original time.
+                    if (symbol in delivered and not api.is_changing(q)) or not q.datetime or q.expired:
                         continue
                     price = number(q.last_price)
                     if price is None:
@@ -153,6 +181,7 @@ def run(config):
                     sequence += 1
                     quote_at = datetime.fromisoformat(q.datetime).replace(tzinfo=SHANGHAI).isoformat()
                     emit('quote', symbol=symbol, last=price, quoteAt=quote_at, receivedAt=now.isoformat(), sequence=sequence, source='TqSdk', **quote_fields(q), **info)
+                    delivered.add(symbol)
                 if time.monotonic()-last_heartbeat >= 5:
                     emit('heartbeat', at=now.isoformat(), activeContracts=active, subscribed=len(requested))
                     last_heartbeat = time.monotonic()
@@ -160,8 +189,7 @@ def run(config):
         except (KeyboardInterrupt, BrokenPipeError):
             return
         except Exception as error:
-            message = str(error)
-            denied = any(word in message.lower() for word in ('认证失败', '权限', '到期', '用户名', '密码', 'auth', 'permission', 'expired', 'invalid credentials'))
+            denied = permission_error(error)
             emit('status', status='permission-denied' if denied else 'disconnected', message='天勤账号、密码或行情权限未通过，请在快期账户中心核对' if denied else '天勤行情连接中断，正在重连')
             if denied:
                 return
