@@ -14,13 +14,12 @@ function installMonitor({base,project,getWindow,isQuitting,requestQuit}){
   const response=await fetch(base+'/api/monitor/'+route,input===undefined?{signal:AbortSignal.timeout(6000)}:{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(input),signal:AbortSignal.timeout(6000)});
   const value=await response.json();if(!response.ok)throw Error(value.error||'提醒服务未响应');return value;
  };
+ const tqApi=async(route,input)=>{const response=await fetch(base+'/api/tq/'+route,{signal:AbortSignal.timeout(20000),...(input===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(input)})});const value=await response.json();if(!response.ok)throw Error(value.error||'天勤行情服务未响应');return value;};
  const reveal=eventId=>{const window=getWindow();if(!window||window.isDestroyed())return;if(window.isMinimized())window.restore();window.show();window.focus();if(eventId)void window.loadURL(base+'/?view=monitor&monitorEvent='+encodeURIComponent(eventId));};
  const trusted=event=>{const window=getWindow();return window&&!window.isDestroyed()&&event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame&&new URL(event.senderFrame.url).origin===base;};
  ipcMain.handle('xiaomu:monitor-configure',async(event,input)=>{
   if(!trusted(event)||!input||typeof input.user!=='string'||typeof input.password!=='string'||!input.user.trim()||!input.password||input.user.length>200||input.password.length>500)throw Error('行情凭据格式无效');
-  if(!safeStorage.isEncryptionAvailable())throw Error('系统加密不可用，未保存密码');
-  const value={user:input.user.trim(),password:input.password},encrypted=safeStorage.encryptString(JSON.stringify(value)),temp=secrets+'.tmp';
-  fs.writeFileSync(temp,encrypted);fs.renameSync(temp,secrets);return api('connection',value);
+  return tqApi('login',{user:input.user.trim(),password:input.password,remember:true});
  });
  ipcMain.handle('xiaomu:monitor-notification-test',async event=>{if(!trusted(event))throw Error('来源无效');return api('test',{channels:['desktop']});});
  app.setAppUserModelId(APP_ID);
@@ -70,7 +69,8 @@ function installMonitor({base,project,getWindow,isQuitting,requestQuit}){
  powerMonitor.on('resume',()=>{if(suspendResume)void api('runtime',{enabled:true,reason:'电脑恢复运行'}).catch(()=>{});});
  const ready=(async()=>{
   await api('runtime',{enabled:true,reason:'APP启动'});
-  if((await api('status')).market.provider!=='sina'&&fs.existsSync(secrets)&&safeStorage.isEncryptionAvailable()){try{const credentials=JSON.parse(safeStorage.decryptString(fs.readFileSync(secrets)));await api('connection',credentials);}catch{}}
+  const tq=await tqApi('status');
+  if(!tq.managed&&!tq.configured&&(await api('status')).market.provider!=='sina'&&fs.existsSync(secrets)&&safeStorage.isEncryptionAvailable()){try{const credentials=JSON.parse(safeStorage.decryptString(fs.readFileSync(secrets)));await tqApi('login',{...credentials,remember:true});}catch{}}
   timer=setInterval(()=>void tick(),2000);timer.unref();await tick();
  })();
  return {ready,async stop(){stopped=true;clearInterval(timer);tray?.destroy();ipcMain.removeHandler('xiaomu:monitor-configure');ipcMain.removeHandler('xiaomu:monitor-notification-test');await api('runtime',{enabled:false,reason:'APP退出'}).catch(()=>{});}};

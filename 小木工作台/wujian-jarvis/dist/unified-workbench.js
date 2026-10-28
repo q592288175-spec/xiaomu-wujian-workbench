@@ -1,4 +1,6 @@
 const marketPages=[['home','市场总览','layout-dashboard'],['overview','周期强弱','grid-2x2'],['strength','品种强弱','chart-no-axes-combined'],['rankings','资金排行','list-ordered'],['funds','资金动向','chart-spline'],['positions','持仓动向','chart-column-increasing'],['fees','期货手续费','calculator'],['variety','品种跟踪','crosshair'],['seat-flow','席位动向','users']];
+import {mountTqLogin} from './tq-login-ui.js';
+mountTqLogin();
 const tradePages=[['home','今日总览','总'],['fire','火 · 识别机会','火'],['water','水 · 分析机会','水'],['metal','金 · 冻结计划','金'],['earth','土 · 执行管理','土'],['wood','木 · 检查迭代','木']];
 const systemPages=[['monitor','盯盘提醒','bell'],['rules','账户与规则','settings-2']];
 const $=s=>document.querySelector(s),nav=$('#mainNav'),drafts=new Map(),detailsState=new Map(),scrolls=new Map();

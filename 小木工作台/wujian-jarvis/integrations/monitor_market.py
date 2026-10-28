@@ -33,6 +33,14 @@ def number(value):
         return None
 
 
+def quote_fields(q):
+    previous = number(q.pre_settlement)
+    last = number(q.last_price)
+    return dict(previousSettlement=previous,
+                changePct=(last / previous - 1) * 100 if last is not None and previous and previous > 0 else None,
+                volume=number(q.volume), interest=number(q.open_interest))
+
+
 def provider_symbol(symbol):
     exchange, contract = symbol.upper().split('.')
     if exchange == 'CZCE' and len(contract.rstrip('0123456789'))+4 == len(contract):
@@ -76,7 +84,7 @@ def run(config):
     while True:
         api = None
         try:
-            emit('status', status='connecting', message='正在核验免费行情权限')
+            emit('status', status='connecting', message='正在登录天勤并核验行情权限')
             api = TqApi(TqSim(), auth=auth, debug=False, disable_print=True)
             quote_objects, requested, expired, unavailable = {}, set(config.get('symbols', [])), set(), set()
             valid_symbols = set(api.query_quotes(ins_class='FUTURE', expired=False))
@@ -89,7 +97,7 @@ def run(config):
             main_quotes = {symbol: api.get_quote(symbol) for symbol in main_symbols}
             main_cont = {symbol: api.get_quote('KQ.m@' + symbol.rstrip('0123456789')) for symbol in main_symbols}
             catalog_signature, sequence, last_heartbeat, last_catalog = '', 0, 0, 0
-            emit('status', status='connected', message='免费期货行情连接已建立', calendarDays=len(dates), entitlementExpiry=str(auth.expire_datetime))
+            emit('status', status='connected', message='天勤行情连接已建立，等待合约报价', calendarDays=len(dates))
             while True:
                 while not commands.empty():
                     command = commands.get_nowait()
@@ -144,7 +152,7 @@ def run(config):
                         continue
                     sequence += 1
                     quote_at = datetime.fromisoformat(q.datetime).replace(tzinfo=SHANGHAI).isoformat()
-                    emit('quote', symbol=symbol, last=price, quoteAt=quote_at, receivedAt=now.isoformat(), sequence=sequence, source='TqSdk', **info)
+                    emit('quote', symbol=symbol, last=price, quoteAt=quote_at, receivedAt=now.isoformat(), sequence=sequence, source='TqSdk', **quote_fields(q), **info)
                 if time.monotonic()-last_heartbeat >= 5:
                     emit('heartbeat', at=now.isoformat(), activeContracts=active, subscribed=len(requested))
                     last_heartbeat = time.monotonic()
@@ -153,8 +161,8 @@ def run(config):
             return
         except Exception as error:
             message = str(error)
-            denied = any(word in message for word in ('认证失败', '权限', '到期', '用户名', '密码', 'auth', 'permission', 'expired'))
-            emit('status', status='permission-denied' if denied else 'disconnected', message='行情认证或权限未通过，请核对免费账号' if denied else '行情连接中断，正在重连')
+            denied = any(word in message.lower() for word in ('认证失败', '权限', '到期', '用户名', '密码', 'auth', 'permission', 'expired', 'invalid credentials'))
+            emit('status', status='permission-denied' if denied else 'disconnected', message='天勤账号、密码或行情权限未通过，请在快期账户中心核对' if denied else '天勤行情连接中断，正在重连')
             if denied:
                 return
             time.sleep(delay)

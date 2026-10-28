@@ -76,7 +76,7 @@ export function commodityExposure(rows,pointValue){
  return {marketInterestChange:samples?interest:null,marketNominalChange:samples?amount:null,marketSamples:samples};
 }
 
-export function createPanorama({root=resolve('.'),folder=process.env.WUJIAN_PANORAMA_DIR||resolve(root,'.runtime/market-panorama'),getFire=async()=>({rows:[]})}={}){
+export function createPanorama({root=resolve('.'),folder=process.env.WUJIAN_PANORAMA_DIR||resolve(root,'.runtime/market-panorama'),getFire=async()=>({rows:[]}),getLiveQuote=()=>null,getLiveStatus=()=>null}={}){
  if(relative(root,folder).startsWith('..'))throw Error('市场缓存必须位于项目内');
  let db=null,catalog=[],specs={},initialized=null,job=null,child=null,liveChild=null,starting=false,revision=0,lastSnapshot=null,snapshotAt=0,stopped=false;
  const listeners=new Set();
@@ -138,16 +138,16 @@ export function createPanorama({root=resolve('.'),folder=process.env.WUJIAN_PANO
  async function snapshot(day=bj()){
   await init();if(!validDate(day)||day>bj())throw Error('请选择有效的历史交易日期');
   await refreshCatalog();
-  if(lastSnapshot?.selectedDate===day&&Date.now()-snapshotAt<5000)return lastSnapshot;
+  if(!getLiveStatus()?.selected&&lastSnapshot?.selectedDate===day&&Date.now()-snapshotAt<5000)return lastSnapshot;
   const dates=db.prepare("SELECT DISTINCT day FROM bars WHERE period='1d' AND day<=? ORDER BY day DESC LIMIT 260").all(day).map(r=>r.day);
   const seatDate=db.prepare('SELECT MAX(day) AS day FROM seats WHERE day<=?').get(day).day||null;
   const allSeats=seatDate?db.prepare('SELECT * FROM seats WHERE day=?').all(seatDate):[];
   const rawFees=db.prepare("SELECT r.* FROM records r WHERE kind='fee' AND day=(SELECT MAX(day) FROM records x WHERE x.kind=r.kind AND x.key=r.key AND x.day<=?)").all(day).map(r=>({...parse(r.body),source:r.source,recordDay:r.day}));
   const prices=new Map(db.prepare("SELECT key,body FROM records WHERE kind='settle' AND day=?").all(seatDate||'').map(r=>[r.key,parse(r.body)?.price]));
   const products=catalog.map(c=>{
-   const daily=bars(c.code,'1d',day),last=daily.at(-1),prev=daily.at(-2),validDaily=Boolean(last&&last.day===dates[0]),live=record('quote',c.code,day),signals={};
+   const daily=bars(c.code,'1d',day),last=daily.at(-1),prev=daily.at(-2),validDaily=Boolean(last&&last.day===dates[0]),live=getLiveQuote(c,day)||record('quote',c.code,day),signals={};
    for(const {key,period} of panoramaPeriods){const signal=maSignal(period==='1d'?daily:period==='1mo'||period==='1w'?calendarBars(daily,period):bars(c.code,period,day,160,c.contract),c.pointValue);const stale=['1mo','1w'].includes(period)?last?.day<dates[0]:signal.stamp&&dates[0]&&signal.stamp.slice(0,10)<dates[0];if(stale)Object.assign(signal,{side:'missing',ma:null,distance:null,reason:'序列陈旧'});signals[key]=signal;}
-   const recent=live&&live.contract===c.contract&&(live.quoteAt.slice(0,10)===day||day===bj()&&live.quoteAt.slice(0,10)>=(dates[0]||day));const close=recent?live.last:validDaily?last.close:null;
+   const recent=live&&live.contract===c.contract&&(live.quoteAt.slice(0,10)===day||live.source==='TqSdk'&&live.tradingDay===day||day===bj()&&live.quoteAt.slice(0,10)>=(dates[0]||day));const close=recent?live.last:validDaily?last.close:null;
    const pct=recent?live.changePct:finite(close)&&prev?.close>0?(close/prev.close-1)*100:null;
    const series=bars(c.code,'30m',day,80,c.contract).filter(b=>b.complete),end=series.at(-1),before=series.at(-2);
    const continuous=end&&before&&end.day>=(dates[0]||day)&&Date.parse(end.stamp.replace(' ','T')+'+08:00')-Date.parse(before.stamp.replace(' ','T')+'+08:00')===1800000;
@@ -161,7 +161,7 @@ export function createPanorama({root=resolve('.'),folder=process.env.WUJIAN_PANO
   const coverage=db.prepare("SELECT body FROM records WHERE kind='coverage' AND day=?").all(seatDate||dates[0]||day).map(r=>parse(r.body));
   const watchlist=parse(db.prepare("SELECT value FROM preferences WHERE key='watchlist'").get()?.value)||[];
   const supplementConfig=parse(await readFile(resolve(root,'data/panorama-sources.json'),'utf8').catch(()=>'null'));const supplementSources=(supplementConfig?.sources||[]).map(s=>({...s,...record('supplement-status',s.key,day)}));
-  const value={supplementSources,selectedDate:day,generatedAt:new Date().toISOString(),revision,dates,seatDate,products,coverage,job,watchlist,periods:Object.fromEntries(panoramaPeriods.map(p=>[p.key,p.label])),maLength:panoramaMaLength,method:'月K、周K、日K、2小时、30分钟统一MA10；完成K线收盘高于均线为多、低于均线为空。月周沿用小木完成日K聚合，保守排除首尾周期；分钟为具体合约。此为市场观察，不改变火筛选资格。席位为公开排名样本，未上榜不作零。',seriesNotice:'使用小木主连及具体合约，未冒充原站加权序列；收益排名不等于原站分数。',source:'AKShare、交易所公开排名与新浪公开行情',counts:{total:products.length,priced:products.filter(p=>p.close!==null).length,seated:products.filter(p=>p.pairs.length).length,fees:rawFees.length}};
+  const value={tqConnection:getLiveStatus(),supplementSources,selectedDate:day,generatedAt:new Date().toISOString(),revision,dates,seatDate,products,coverage,job,watchlist,periods:Object.fromEntries(panoramaPeriods.map(p=>[p.key,p.label])),maLength:panoramaMaLength,method:'月K、周K、日K、2小时、30分钟统一MA10；完成K线收盘高于均线为多、低于均线为空。月周沿用小木完成日K聚合，保守排除首尾周期；分钟为具体合约。此为市场观察，不改变火筛选资格。席位为公开排名样本，未上榜不作零。',seriesNotice:'使用小木主连及具体合约，未冒充原站加权序列；收益排名不等于原站分数。',source:'AKShare、交易所公开排名与新浪公开行情',counts:{total:products.length,priced:products.filter(p=>p.close!==null).length,seated:products.filter(p=>p.pairs.length).length,fees:rawFees.length}};
   lastSnapshot=value;snapshotAt=Date.now();return value;
  }
  async function detail(code,day=bj()){

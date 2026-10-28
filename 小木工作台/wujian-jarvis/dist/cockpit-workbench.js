@@ -1,4 +1,6 @@
 import {mountShell} from './shell.js';
+import {mountTqLogin} from './tq-login-ui.js';
+mountTqLogin();
 import {createAccountUI,accountSummary} from './account-ui.js';
 import {fireStructure,refreshMinute} from './fire-display.js';
 import {POOL_MODES,RESONANCE_MODE,cycleTone,dominantTone,poolCandidates,sectorForKey,sectorSummaries,sideForRow,workflowSummary} from './cockpit-data.js';

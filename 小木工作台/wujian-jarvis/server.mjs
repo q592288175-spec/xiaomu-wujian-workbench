@@ -38,21 +38,34 @@ import {scanRuleDetails} from './integrations/scan-rule-details.mjs';
 import {createOperationArchive} from './integrations/operation-archive.mjs';
 import {checkTradeMarket} from './integrations/trade-market-check.mjs';
 import {monitorService} from './integrations/monitor-service.mjs';
+import {TqLogin} from './integrations/tq-login.mjs';
+import {tqQuoteFor} from './integrations/tq-panorama.mjs';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname,dirname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID,createHash} from 'node:crypto';
 const ROOT=dirname(fileURLToPath(import.meta.url)),PUBLIC=resolve(ROOT,'dist'),PORT=Number(process.env.PORT||4318);
 const buildSources=['integrations/relative-strength.mjs','integrations/knowledge-policy.mjs','integrations/knowledge-base.mjs','integrations/research-application.mjs','integrations/maintenance.mjs','integrations/monitor-health.mjs','scripts/system-backup.mjs','server.mjs','integrations/five-workbench.mjs','integrations/fire-refresh.mjs','integrations/eod-refresh.mjs','scripts/fire_scan.py','integrations/eod_market.py','integrations/trade-ledger.mjs','integrations/account-balances.mjs','integrations/team-governance.mjs','integrations/approval-boundary.mjs','integrations/assistant.mjs','integrations/research-agent.mjs','integrations/research-market.mjs','integrations/research.mjs','integrations/research-evidence.mjs','integrations/team-context.mjs','integrations/postmarket-review.mjs','integrations/postmarket-evidence.mjs','integrations/postmarket-sources.mjs','scripts/postmarket_calendar.py','integrations/monitor-service.mjs','integrations/monitor-engine.mjs','integrations/monitor-store.mjs','integrations/monitor-announcements.mjs','integrations/monitor_market.py','integrations/monitor-sina.mjs','integrations/feishu-core.mjs','integrations/feishu.mjs','integrations/im-binding.mjs','integrations/local-secret.mjs','scripts/protect-local-secret.ps1','integrations/volc-voice.mjs','integrations/volc-duplex.mjs','integrations/voice-config.mjs'];
+buildSources.push('integrations/tq-login.mjs','integrations/tq-panorama.mjs');
 const serverBuild=createHash('sha256').update(Buffer.concat(await Promise.all(buildSources.concat('integrations/day-trend.mjs','integrations/gold-planning.mjs','dist/gold-methods.js').map(p=>readFile(resolve(ROOT,p)))))).digest('hex');
 const operationArchive=createOperationArchive(process.env.WUJIAN_OPERATION_DIR||resolve(ROOT,'操作记录'),operationArchiveData);
 const monitor=monitorService();
-const panorama=createPanorama({root:ROOT,getFire:async()=>applyDayTrendRule(await latestFire())});
+const tqLogin=new TqLogin({monitor,root:ROOT});
+const panorama=createPanorama({root:ROOT,getFire:async()=>applyDayTrendRule(await latestFire()),getLiveQuote:(product,day)=>tqQuoteFor(product,day,monitor),getLiveStatus:()=>tqLogin.status()});
 const postmarketReview=createPostmarketReview({getScan:latestFire,refreshScan:startFireRefresh,getEvidence:loadPostmarketEvidence,explain:process.env.DEEPSEEK_API_KEY?explainPostmarketReport:null});
 const json=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(obj))};
 async function body(req){let chunks=[],size=0;for await(const c of req){size+=c.length;if(size>2*1024*1024)throw Error('请求过大');chunks.push(c)}return JSON.parse(Buffer.concat(chunks).toString()||'{}')}
 const origins=new Set([`http://localhost:${PORT}`,`http://127.0.0.1:${PORT}`]);
 const server=http.createServer(async(req,res)=>{try{const host=req.headers.host;if(![`localhost:${PORT}`,`127.0.0.1:${PORT}`].includes(host))return json(res,403,{error:'仅允许本地访问'});const url=new URL(req.url,`http://${host}`);if(['POST','PATCH','DELETE'].includes(req.method)&&!origins.has(req.headers.origin))return json(res,403,{error:'来源校验失败'});
+if(url.pathname.startsWith('/api/tq/')){
+ const path=url.pathname.slice('/api/tq/'.length);
+ if(req.method==='GET'&&path==='status')return json(res,200,tqLogin.status());
+ if(req.method==='GET'&&path==='quotes')return json(res,200,tqLogin.quotes());
+ if(req.method==='POST'&&path==='login')return json(res,202,await tqLogin.login(await body(req)));
+ if(req.method==='POST'&&path==='reconnect')return json(res,202,await tqLogin.reconnect());
+ if(req.method==='POST'&&path==='logout')return json(res,200,await tqLogin.logout());
+ return json(res,404,{error:'天勤行情接口不存在'});
+}
 if(req.method==='GET'&&url.pathname==='/api/maintenance/status')return json(res,200,await maintenanceStatus());
 if(url.pathname.startsWith('/api/market-panorama/')){
  const path=url.pathname.slice('/api/market-panorama/'.length);
@@ -219,6 +232,7 @@ if(req.method!=='GET')return json(res,405,{error:'方法不支持'});const p=res
 }catch(e){json(res,400,{error:'请求无效或本地处理失败'})}});
 const closeVolc=attachVolc(server,PORT);
 await loadVoiceConfig();
+await tqLogin.init();
 await loadBinding().catch(()=>{});
 const stopEodSchedule=process.env.WUJIAN_SKIP_EOD_SCHEDULE==='1'?()=>{}:startEodSchedule();
 server.listen(PORT,'127.0.0.1',()=>{console.log(`小木 local workspace: http://127.0.0.1:${PORT}`);void startFeishu()});

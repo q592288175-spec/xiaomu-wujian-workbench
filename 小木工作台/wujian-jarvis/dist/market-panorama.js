@@ -215,7 +215,7 @@ function updateStatus(){
  const cycleRefresh=$('[data-cycle-refresh]');if(cycleRefresh){cycleRefresh.disabled=state.refreshPending||j?.status==='running';cycleRefresh.querySelector('span').textContent=j?.status==='running'?'同步中':'刷新'}
  if(s)$('#coverageText').textContent=`目录 ${s.counts.total} · 行情 ${s.counts.priced} · 持仓 ${s.counts.seated} · 费用 ${s.counts.fees} 合约`;
  $('#connection').textContent=state.connected?'本机市场库已连接':'连接恢复中 · 保留已有数据';
- const notice=$('#dataNotice');if(notice)notice.textContent=(s?.serviceNeedsRestart?'新版数据服务尚未启动：请保存编辑，从小木菜单退出并重新打开；仅刷新页面不能启用2小时数据。':'')+(s?.products.some(p=>Object.values(p.signals).some(x=>['long','short'].includes(x.side)&&!Object.hasOwn(x,'maChange')))?'新版强弱计算等待重启小木，暂不显示未经核验的深浅色。':'')+'公开行情可能延迟；席位为盘后公开排名；费用为第三方参考，非账户实际费率。'+(s?.coverage.some(c=>c.exchange==='DCE'&&c.status!=='available')?'大商所席位仅覆盖已核验主力，非全月份。':'');
+ const notice=$('#dataNotice');if(notice)notice.textContent=(s?.serviceNeedsRestart?'新版数据服务尚未启动：请保存编辑，从小木菜单退出并重新打开；仅刷新页面不能启用2小时数据。':'')+(s?.products.some(p=>Object.values(p.signals).some(x=>['long','short'].includes(x.side)&&!Object.hasOwn(x,'maChange')))?'新版强弱计算等待重启小木，暂不显示未经核验的深浅色。':'')+(s?.tqConnection?.selected?`天勤行情：${s.tqConnection.message}；收到 ${s.tqConnection.quoteCount} 个合约报价；各品种显示实际价格来源。`:'公开行情可能延迟；')+'席位为盘后公开排名；费用为第三方参考，非账户实际费率。'+(s?.coverage.some(c=>c.exchange==='DCE'&&c.status!=='available')?'大商所席位仅覆盖已核验主力，非全月份。':'');
 }
 async function load(){
  if(loading){pendingLoad=true;return}loading=true;const request=++state.request,date=state.date;state.fetchingDate=date;updateStatus();
@@ -366,6 +366,8 @@ window.addEventListener('pageshow',e=>{if(e.persisted){connect();render();void l
 window.addEventListener('xiaomu:fire-updated',e=>{if(!e.detail?.rows?.length)return;state.latestFire=e.detail;state.fireVersion++;state.fireDirty=true;state.detailCache.clear();if(state.snapshot){state.snapshot=mergeFireSnapshot(state.snapshot,e.detail);if(active()&&!state.playing)render()}else if(active())void load()});
 window.addEventListener('storage',e=>{if(e.key==='wj-fire-revision'){state.fireDirty=true;if(active()&&!state.playing)void load()}});
 function connect(){stream?.close();clearInterval(pollTimer);stream=new EventSource('/api/market-panorama/events');stream.addEventListener('job',e=>{const j=JSON.parse(e.data);if(state.snapshot)state.snapshot.job=j;updateStatus();if(j.status!=='running'&&state.auto&&!state.playing&&active()){state.detailCache.clear();void load()}});stream.addEventListener('data',()=>{if(state.auto&&!state.playing&&active()){state.detailCache.clear();void load()}});stream.onerror=()=>{state.connected=false;updateStatus()};stream.onopen=()=>{state.connected=true;updateStatus()};pollTimer=setInterval(()=>{if(state.auto&&!state.playing&&active()&&document.visibilityState==='visible')void load()},30000)}
+window.addEventListener('xiaomu:market-connection',()=>{state.detailCache.clear();if(active())void load()});
+setInterval(()=>{if(state.snapshot?.tqConnection?.selected&&state.auto&&!state.playing&&active()&&document.visibilityState==='visible')void load()},5000);
 icons();await load();connect();
 
 mountShell();

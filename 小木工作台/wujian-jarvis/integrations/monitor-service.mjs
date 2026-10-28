@@ -10,6 +10,7 @@ import {latestFire} from './five-workbench.mjs';
 import {contractSpec} from './contract-specs.mjs';
 import {feishuStatus,pushMonitorMessage} from './feishu.mjs';
 import {SinaMonitorFeed} from './monitor-sina.mjs';
+import {validateTqCredentials} from './tq-login.mjs';
 
 export function monitorMessage(event){
  const at=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',dateStyle:'short',timeStyle:'medium'}).format(new Date(event.triggeredAt));
@@ -85,15 +86,15 @@ export class MonitorService{
   for(const rule of this.store.rules().filter(rule=>rule.status==='active'&&rule.expiresAt&&Date.parse(rule.expiresAt)<=this.now()))this.setStatus(rule.id,'expired');
   void this.deliverPhone();
  }
- subscriptions(){return [...new Set(this.store.rules().filter(rule=>rule.status==='active'&&rule.kind!=='announcement').flatMap(rule=>rule.members.filter(member=>!this.store.ruleState(rule.id,member.symbol).expired&&(this.provider==='sina'||!this.store.ruleState(rule.id,member.symbol).unavailable)).map(member=>member.symbol)))].sort();}
+ subscriptions(){return [...new Set([...(this.provider==='tqsdk'&&this.watchMarket?this.marketSymbols||[]:[]),...this.store.rules().filter(rule=>rule.status==='active'&&rule.kind!=='announcement').flatMap(rule=>rule.members.filter(member=>!this.store.ruleState(rule.id,member.symbol).expired&&(this.provider==='sina'||!this.store.ruleState(rule.id,member.symbol).unavailable)).map(member=>member.symbol))])].sort();}
  syncSubscriptions(){const symbols=this.subscriptions(),key=symbols.join(',');if(!this.runtime)return;if(this.provider==='sina'){if(this.publicFeed){if(key!==this.subscription){this.engine.reset();this.publicFeed.subscribe(symbols);this.subscription=key;}}else this.connectPublic();return;}if(this.child){if(key!==this.subscription){this.engine.reset();this.child.stdin.write(JSON.stringify({type:'subscribe',symbols})+'\n');this.subscription=key;}}else if(this.credentials&&symbols.length)this.connect(this.credentials);}
- connect(credentials){
-  if(typeof credentials.user!=='string'||typeof credentials.password!=='string'||!credentials.user.trim()||!credentials.password||credentials.user.length>200||credentials.password.length>500)throw Error('请填写行情用户名和密码');
+ connect(credentials,{resume=true}={}){
+  credentials=validateTqCredentials(credentials);
   this.selectProvider('tqsdk');
-  this.disconnect();this.credentials={user:credentials.user.trim(),password:credentials.password};this.runtime=true;
-  const candidates=[process.env.TQ_PYTHON,resolve(this.root,'.runtime/python313/python.exe'),resolve(this.root,'.venv-data/Scripts/python.exe')].filter(Boolean),python=candidates.find(path=>existsSync(path));
+  this.disconnect();this.credentials={user:credentials.user.trim(),password:credentials.password};if(resume)this.runtime=true;
+  const candidates=[process.env.TQ_PYTHON,resolve(this.root,'.runtime/python313/python.exe'),resolve(this.root,process.platform==='win32'?'.venv-data/Scripts/python.exe':'.venv-data/bin/python')].filter(Boolean),python=candidates.find(path=>existsSync(path));
   if(!python){this.market={status:'runtime-missing',message:'Python运行环境未找到',heartbeatAt:null};this.emit('change',{});return this.status();}
-  const symbols=this.subscriptions(),child=spawn(python,['-u',resolve(this.root,'integrations/monitor_market.py')],{cwd:this.root,windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,PYTHONIOENCODING:'utf-8'}});this.child=child;this.subscription=symbols.join(',');this.market={status:'connecting',message:'正在核验免费行情权限',heartbeatAt:new Date(this.now()).toISOString()};
+  const symbols=this.subscriptions(),child=spawn(python,['-u',resolve(this.root,'integrations/monitor_market.py')],{cwd:this.root,windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,PYTHONIOENCODING:'utf-8',TQ_USER:'',TQ_PASSWORD:''}});this.child=child;this.subscription=symbols.join(',');this.market={status:'connecting',message:'正在登录天勤并核验行情权限',heartbeatAt:null};
   child.stdin.on('error',()=>{});child.stdin.write(JSON.stringify({...this.credentials,symbols})+'\n');
   let oversized=false;child.stdout.on('data',chunk=>{if(chunk.length>2*1024*1024){oversized=true;child.kill();}});
   const lines=createInterface({input:child.stdout});lines.on('line',line=>{if(oversized||this.child!==child||line.length>2*1024*1024)return;try{this.accept(JSON.parse(line));}catch{}});

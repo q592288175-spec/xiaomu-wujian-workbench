@@ -12,7 +12,7 @@ const playwrightModule=process.env.WUJIAN_PLAYWRIGHT_MODULE||join(homedir(),'.ca
 const {chromium,_electron}=await import(pathToFileURL(playwrightModule).href);
 export {chromium,_electron};
 export const project=resolve('.'),redesignOutput=resolve('output/redesign-2026-10-25');
-export async function openHarness(stage,{businessName='business.sqlite'}={}){
+export async function openHarness(stage,{businessName='business.sqlite',envOverrides={}}={}){
  const out=join(redesignOutput,stage);await mkdir(out,{recursive:true});
  const fixtureFile=join(redesignOutput,'fixture.json');let root;
  if(existsSync(fixtureFile)){root=JSON.parse(await readFile(fixtureFile,'utf8')).root}
@@ -29,6 +29,7 @@ export async function openHarness(stage,{businessName='business.sqlite'}={}){
  if(businessName!=='business.sqlite'){const source=new DatabaseSync(join(root,'business.sqlite'),{readOnly:true});await backup(source,join(root,businessName));source.close()}
  const env={...process.env,PORT:String(port),WUJIAN_WORKBENCH_DB:join(root,businessName),WUJIAN_BUNDLE_ROOT:resolve('../资料包'),WUJIAN_OPERATION_DIR:join(root,'操作记录'),WUJIAN_MONITOR_DB:join(root,'monitor.sqlite'),WUJIAN_MONITOR_HOME:join(root,'monitor'),WUJIAN_PANORAMA_DIR:join(root,'panorama'),WUJIAN_SKIP_EOD_SCHEDULE:'1',WUJIAN_PANORAMA_AUTOSYNC:'0',WUJIAN_DESKTOP_PORT:String(port),WUJIAN_DESKTOP_PROFILE:join(root,'profile')};
  for(const k of Object.keys(env))if(/TQ_|FEISHU_|DEEPSEEK_|OPENAI_|VOLC_|ARK_|JIN10/.test(k)||k==='ELECTRON_RUN_AS_NODE')delete env[k];
+ Object.assign(env,envOverrides);
  const service=spawn(process.execPath,[join(project,'server.mjs')],{cwd:root,env,windowsHide:true,stdio:['ignore','pipe','pipe']});let log='';service.stdout.on('data',s=>log+=s);service.stderr.on('data',s=>log+=s);
  for(let i=0;i<150;i++){try{const h=await fetch(base+'/api/health').then(r=>r.json());if(h.projectRoot===project)break}catch{}if(i===149){service.kill();throw Error(log)}await new Promise(r=>setTimeout(r,100))}
  const browser=await chromium.launch({headless:true,executablePath:process.env.WUJIAN_CHROMIUM||'E:/AppCache/Playwright/chromium-1228/chrome-win64/chrome.exe',args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
